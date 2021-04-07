@@ -1,36 +1,36 @@
-#include <windows.h>  // sunt mentionate fisiere (biblioteci) care urmeaza sa fie incluse 
-#include <gl/freeglut.h> // nu trebuie uitat freeglut.h (sau glut.h sau gl.h & glu.h)
+#include <windows.h> 
+#include <gl/freeglut.h> 
 #include <iostream>
 using namespace std;
 
-void init(void)  // initializare fereastra de vizualizare
+void init(void)  
 {
-	glClearColor(1.0, 1.0, 1.0, 0.0); // precizeaza culoarea de fond a ferestrei de vizualizare
+    glClearColor(0.000, 0.392, 0.000, 1);
 
-	glMatrixMode(GL_PROJECTION);  // se precizeaza este vorba de o reprezentare 2D, realizata prin proiectie ortogonala
+	glMatrixMode(GL_PROJECTION);  
     glLoadIdentity();
-    gluOrtho2D(0, 500, 0, 500); // sunt indicate coordonatele extreme ale ferestrei de vizualizare
+    gluOrtho2D(0, 500, 0, 500); 
     glMatrixMode(GL_MODELVIEW);
 }
 
-int carX = 200, carY = 70;
-int carsX=200, carsY=230;
-int masiniX[4], masiniY[4];
-int divx = 250, divy = 4, movd;
-bool collide = false;
+int carX = 200, carY = 70;//variabile pentru coordonatele masinii principale
+int carsX=200, carsY=230;//variabile pentru coordonatele masinii statice
+int masiniX[4], masiniY[4];//vectorii pentru coordonatele masinilor din race
+int marcX = 250, macrY = 4, movd;//variabilele pentru ajutatarea la generarea masinilor de race
+bool collide = false;//variabila pentru terminarea race-ului
 
+//functia pentru generarea copaciilor
 void tree(int x, int y) {
     int x1 = x;
     int y1 = y;
-    //Tree Left
-            //Bottom
+    //tulpina
     glColor3f(0.871, 0.722, 0.529);
     glBegin(GL_TRIANGLES);
     glVertex2f(x1 + 110, y1 + 250);
     glVertex2f(x1 + 120, y1 + 250 - 100);
     glVertex2f(x1 + 100, y1 + 250 - 100);
     glEnd();
-    //Up
+    //coroana
     glColor3f(0.133, 0.545, 0.133);
     glBegin(GL_TRIANGLES);
     glVertex2f(x1 + 110, y1 + 250 + 3);
@@ -40,6 +40,7 @@ void tree(int x, int y) {
     glFlush();
 }
 
+//functiile pentru generarea drumului si a marcajului central
 void drum(void) {
     //drumul
     glColor3f(0.412, 0.412, 0.412);
@@ -54,19 +55,23 @@ void drum(void) {
 }
 void marcaj(void)
 {
-    
+    glLoadIdentity();
+    glTranslatef(0, movd, 0);
     for (int i = 1; i <= 10; i++)
     {
         glColor3f(0, 0, 0);
-        glBegin(GL_QUADS);
-        glVertex2f(divx - 5, divy * 15 * i + 18);
-        glVertex2f(divx - 5, divy * 15 * i - 18);
-        glVertex2f(divx + 5, divy * 15 * i - 18);
-        glVertex2f(divx + 5, divy * 15 * i + 18);
+        glBegin(GL_POLYGON);
+        glVertex2f(marcX - 5, macrY * 15 * i + 18);
+        glVertex2f(marcX - 5, macrY * 15 * i - 18);
+        glVertex2f(marcX + 5, macrY * 15 * i - 18);
+        glVertex2f(marcX + 5, macrY * 15 * i + 18);
         glEnd();
     }
+    glLoadIdentity();
     glFlush();
 }
+
+//funtia pentru generarea masinii principale
 void masinaPrincipala(void) {
     
     //rotile
@@ -105,6 +110,7 @@ void masinaPrincipala(void) {
     glFlush();
 }
 
+//fuctia pentru generarea masinii statitce pentru partea de depasire
 void masinaDepasire(void)
 {
     //roti
@@ -117,7 +123,7 @@ void masinaDepasire(void)
     glVertex2f(carsX + 25, carsY - 16);
     glEnd();
     //partea de mijloc
-    glBegin(GL_QUADS);
+    glBegin(GL_POLYGON);
     glColor3f(0.99609, 0.83984, 0);
     glVertex2f(carsX - 25, carsY + 20);
     glVertex2f(carsX - 25, carsY - 20);
@@ -126,7 +132,7 @@ void masinaDepasire(void)
     glEnd();
 
     //partea de sus a masinii
-    glBegin(GL_QUADS);
+    glBegin(GL_POLYGON);
     glColor3f(0, 1, 0);
     glVertex2f(carsX - 23, carsY + 20);
     glVertex2f(carsX - 19, carsY + 40);
@@ -134,7 +140,7 @@ void masinaDepasire(void)
     glVertex2f(carsX + 23, carsY + 20);
     glEnd();
     //partea de jos a masinii
-    glBegin(GL_QUADS);
+    glBegin(GL_POLYGON);
     glColor3f(0, 1, 0);
     glVertex2f(carsX - 23, carsY - 20);
     glVertex2f(carsX - 19, carsY - 35);
@@ -142,6 +148,69 @@ void masinaDepasire(void)
     glVertex2f(carsX + 23, carsY - 20);
     glEnd();
     glFlush();
+}
+//functia pentru creea masinilor pentru partea de minigame
+void masiniRace(void)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        //roti
+        glPointSize(10.0);
+        glBegin(GL_POINTS);
+        glColor3f(0, 0, 0);
+        glVertex2f(masiniX[i] - 25, masiniY[i] + 16);
+        glVertex2f(masiniX[i] + 25, masiniY[i] + 16);
+        glVertex2f(masiniX[i] - 25, masiniY[i] - 16);
+        glVertex2f(masiniX[i] + 25, masiniY[i] - 16);
+        glEnd();
+
+        //partea de mijloc
+        glBegin(GL_POLYGON);
+        glColor3f(0.99609, 0.83984, 0);
+        glVertex2f(masiniX[i] - 25, masiniY[i] + 20);
+        glVertex2f(masiniX[i] - 25, masiniY[i] - 20);
+        glVertex2f(masiniX[i] + 25, masiniY[i] - 20);
+        glVertex2f(masiniX[i] + 25, masiniY[i] + 20);
+        glEnd();
+
+        //partea de sus
+        glBegin(GL_POLYGON);
+        glColor3f(0, 1, 0);
+        glVertex2f(masiniX[i] - 23, masiniY[i] + 20);
+        glVertex2f(masiniX[i] - 19, masiniY[i] + 40);
+        glVertex2f(masiniX[i] + 19, masiniY[i] + 40);
+        glVertex2f(masiniX[i] + 23, masiniY[i] + 20);
+        glEnd();
+
+        //partea de jos
+        glBegin(GL_POLYGON);
+        glColor3f(0, 1, 0);
+        glVertex2f(masiniX[i] - 23, masiniY[i] - 20);
+        glVertex2f(masiniX[i] - 19, masiniY[i] - 35);
+        glVertex2f(masiniX[i] + 19, masiniY[i] - 35);
+        glVertex2f(masiniX[i] + 23, masiniY[i] - 20);
+        glEnd();
+
+        masiniY[i] = masiniY[i] - 8;
+        if (masiniY[i] > carY - 25 - 25 && masiniY[i] < carY + 25 + 25 && masiniX[i] == carX)
+        {
+            collide = true;
+        }
+
+        if (masiniY[i] < -25)
+        {
+            if (rand() % 2 == 0)
+            {
+                masiniX[i] = 200;
+            }
+            else
+            {
+                masiniX[i] = 300;
+            }
+            masiniY[i] = 600;
+        }
+    }
+    
 }
 //Functiile ptr depasire
 void miscareInSus(void)
@@ -253,9 +322,28 @@ void mouse(int button, int state, int x, int y)
     }
 }
 
+void depasire(void) {
+
+    //apelarea merodelor ptr drum si masini
+    drum();
+    marcaj();
+    masinaPrincipala();
+    masinaDepasire();
+
+}
+
+void race(void)
+{
+    drum();
+    marcaj();
+    masinaPrincipala();
+    masiniRace();
+}
+
 void desen(void) // procedura desenare  
 {
     glClear(GL_COLOR_BUFFER_BIT);
+
     //generarea copacillor pentru partea stanga a drumului
     tree(-75, -150);
     tree(5, -150);
@@ -270,11 +358,7 @@ void desen(void) // procedura desenare
     tree(275, 150);
     tree(360, 150);
 
-    //apelarea merodelor ptr drum si masini
-    drum();
-    marcaj();
-    masinaPrincipala();
-    masinaDepasire();
+    depasire();
    
     glutSwapBuffers();
 	glFlush(); // proceseaza procedurile OpenGL cat mai rapid
